@@ -45,7 +45,7 @@ mkYesod "App" [parseRoutes|
 -- JobQueue settings
 data MyJobType = AggregationUser | PushNotification deriving (Show, Read, Enum, Bounded)
 instance JobInfo MyJobType where
-        describe AggregationUser = "aggregate users"
+        describe AggregationUser = "aggregate user's activities"
         describe _ = "No information"
 
 instance YesodJobQueue App SqliteConf where

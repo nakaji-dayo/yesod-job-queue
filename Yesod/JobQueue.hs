@@ -31,7 +31,7 @@ import Data.Aeson.TH
 import Data.FileEmbed (embedFile)
 
 -- persist config for job env
-type JobDBConf c = (PersistConfig c) => (c, PersistConfigPool c)
+-- type JobDBConf c = (PersistConfig c) => (c, PersistConfigPool c)
 
 class JobInfo j where
     describe :: j -> String
@@ -69,12 +69,11 @@ $(deriveToJSON defaultOptions ''JobQueueItem)
 
 class (Yesod master, Read (JobType master), Show (JobType master)
       , Enum (JobType master), Bounded (JobType master)
-      , JobInfo (JobType master)
-      , PersistConfig config)
-      => YesodJobQueue master config | master -> config where
+      , JobInfo (JobType master))
+      => YesodJobQueue master where
     
     -- persistent config for job
-    jobDBConfig :: master -> JobDBConf config
+    -- jobDBConfig :: master -> JobDBConf config
     
     -- Custom Job Type
     type JobType master
@@ -98,13 +97,11 @@ class (Yesod master, Read (JobType master), Show (JobType master)
     -- get all job type list
     allJobTypes :: master -> [JobType master]
     allJobTypes _ = [minBound..]
+    
     -- runDB with config for job
-    runDBJob :: (MonadBaseControl IO m, MonadIO m) =>
-                PersistConfigBackend config m a -> ReaderT master m a
-    runDBJob action = do
-        m <- ask
-        let (config, pool) = jobDBConfig m
-        lift $ runPool config action pool
+    runDBJob :: (MonadBaseControl IO m, MonadIO m)
+                => ReaderT (YesodPersistBackend master) (ReaderT master m) a
+                -> ReaderT master m a
 
     -- start thread of dequeue-ing job
     startDequeue :: (MonadBaseControl IO m, MonadIO m) => master -> m ()
@@ -136,6 +133,7 @@ class (Yesod master, Read (JobType master), Show (JobType master)
                     return ()
         return ()
 
+    -- | get job state
     getJobState :: master -> JobState
 
     -- | get API and Manager base url
@@ -170,7 +168,7 @@ class (Yesod master, Read (JobType master), Show (JobType master)
 
 -- | Handler for job manager api routes
 type JobHandler master a =
-    YesodJobQueue master c => HandlerT JobQueue (HandlerT master IO) a
+    YesodJobQueue master => HandlerT JobQueue (HandlerT master IO) a
 
 -- | get job definitions
 getJobR :: JobHandler master Value
@@ -243,7 +241,7 @@ getJobManagerStaticR f
     | otherwise = notFound
 
 -- | JobQueue manager subsite
-instance YesodJobQueue master c => YesodSubDispatch JobQueue (HandlerT master IO) where
+instance YesodJobQueue master => YesodSubDispatch JobQueue (HandlerT master IO) where
     yesodSubDispatch = $(mkYesodSubDispatch resourcesJobQueue)
 
 getJobQueue :: a -> JobQueue

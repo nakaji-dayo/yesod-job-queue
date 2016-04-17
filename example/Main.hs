@@ -49,19 +49,23 @@ instance JobInfo MyJobType where
         describe AggregationUser = "aggregate user's activities"
         describe _ = "No information"
 
-instance YesodJobQueue App SqliteConf where
+instance YesodJobQueue App where
     type JobType App = MyJobType
     getJobState = appJobState
-    jobDBConfig app = (appDBConf app, appConnPool app)
+    -- jobDBConfig app = (appDBConf app, appConnPool app)
+    runDBJob action = do
+        app <- ask
+        runSqlPool action $ appConnPool app
     runJob app AggregationUser = do
         us <- runDBJob $ selectList ([] :: [Filter Person]) []
         liftIO $ threadDelay $ 10 * 1000 * 1000
+        print us
         putStrLn "complate job!"
     runJob app PushNotification = do
         putStrLn "send norification!"
     -- jobManagerJSUrl _ = "http://localhost:3001/dist/app.bundle.js" -- use for development with "npm run bs"
 
-instance YesodJobQueueScheduler App SqliteConf where
+instance YesodJobQueueScheduler App  where
     getJobSchedules _ = [("* * * * *", AggregationUser)
                          , ("* * * * *", PushNotification)]
 

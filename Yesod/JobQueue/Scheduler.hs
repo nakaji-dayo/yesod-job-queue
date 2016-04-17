@@ -6,7 +6,7 @@ import System.Cron.Schedule
 import qualified Prelude as P
 import ClassyPrelude.Yesod
 
-class (YesodJobQueue master config) => YesodJobQueueScheduler master config where
+class (YesodJobQueue master) => YesodJobQueueScheduler master where
     -- | job schedules
     getJobSchedules :: master -> [(String, JobType master)]
 

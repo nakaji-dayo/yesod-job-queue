@@ -3,3 +3,6 @@ node_modules
 
 
 app/dist/app.bundle.js
+
+test.db3
+client_session_key.aes

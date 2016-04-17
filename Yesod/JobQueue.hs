@@ -25,6 +25,7 @@ import qualified Database.Redis as R
 import qualified Data.UUID as U
 import qualified Data.UUID.V4 as U
 import qualified Control.Concurrent.STM as STM
+import Data.Time.Clock
 
 import Data.Aeson.TH
 
@@ -36,6 +37,36 @@ type JobDBConf c = (PersistConfig c) => (c, PersistConfigPool c)
 class JobInfo j where
     describe :: j -> String
     describe _ = ""
+
+-- | Thread ID for convenience
+type ThreadNum = Int
+
+-- | JobType String
+type JobTypeString = String
+
+-- | Information of the running job
+data RunningJob = RunningJob {
+    jobType :: JobTypeString
+    , threadId :: ThreadNum
+    , jobId :: U.UUID
+    , startTime :: UTCTime
+    } deriving (Eq)
+instance ToJSON U.UUID where
+    toJSON = String . pack . U.toString
+$(deriveToJSON defaultOptions ''RunningJob)
+
+-- | Manage the running jobs
+type JobState = TVar [RunningJob]
+
+-- | create new JobState
+newJobState :: IO (TVar [RunningJob])
+newJobState = STM.newTVarIO []
+
+data JobQueueItem = JobQueueItem {
+    queueJobType :: JobTypeString
+    , queueTime :: UTCTime
+} deriving (Show, Read)
+$(deriveToJSON defaultOptions ''JobQueueItem)
 
 class (Yesod master, Read (JobType master), Show (JobType master)
       , Enum (JobType master), Bounded (JobType master)
@@ -88,9 +119,12 @@ class (Yesod master, Read (JobType master), Show (JobType master)
                         Left e -> putStrLn "[dequeue] error in at connection redis"
                         Right Nothing -> putStrLn "[dequeue] timeout retry"
                         Right (Just (k, v)) -> do
-                            case readJobType m (BSC.unpack v) of
+                            let item = readMay $ BSC.unpack v :: Maybe JobQueueItem
+                            case readJobType m =<< queueJobType <$> item of
                              Just jt -> do
-                                 job <- RunningJob <$> U.nextRandom
+                                 jid <- U.nextRandom
+                                 time <- getCurrentTime
+                                 let job = RunningJob (show jt) 1 jid time
                                  STM.atomically
                                      $ STM.modifyTVar (getJobState m)
                                      (job:)
@@ -105,30 +139,35 @@ class (Yesod master, Read (JobType master), Show (JobType master)
 
     getJobState :: master -> JobState
 
+    -- | get API and Manager base url
+    jobAPIBaseUrl :: master -> String
+    jobAPIBaseUrl _  = "/job"
+
+    -- | get manager application javascript url (change only development)
+    jobManagerJSUrl :: master -> String
+    jobManagerJSUrl m = (jobAPIBaseUrl m) ++ "/manager/app.js"
+
     enqueue :: master -> JobType master -> IO ()
     enqueue m jt = do
+        time <- getCurrentTime
+        let item = JobQueueItem (show jt) time
         conn <- liftIO $ R.connect R.defaultConnectInfo
         R.runRedis conn $ do
-            R.rpush (queueKey m) [BSC.pack $ show jt]
+            R.rpush (queueKey m) [BSC.pack $ show item]
         return ()
 
-    listQueue :: master -> IO (Either String [JobType master])
+    listQueue :: master -> IO (Either String [JobQueueItem])
     listQueue m = do
         conn <- R.connect R.defaultConnectInfo
         exs <- R.runRedis conn $ do
             R.lrange (queueKey m) 0 (-1)
         case exs of
          Right xs ->
-             return $ Right $ catMaybes $ map ((readJobType m) . BSC.unpack) xs
+             return $ Right $ catMaybes
+             $ map (readMay . BSC.unpack) xs
          Left r -> return $ Left $ show r
 
-type JobState = TVar [RunningJob]
-data RunningJob = RunningJob U.UUID deriving (Eq)
-$(deriveToJSON defaultOptions ''RunningJob)
-newJobState :: IO (TVar [RunningJob])
-newJobState = STM.newTVarIO []
-instance ToJSON U.UUID where
-    toJSON = String . pack . U.toString
+
 
 -- | Handler for job manager api routes
 type JobHandler master a =
@@ -148,7 +187,7 @@ getJobQueueR :: JobHandler master Value
 getJobQueueR = lift $ do
     y <- getYesod
     Right q <- liftIO $ listQueue y
-    returnJson $ object ["queue" .= map show q]
+    returnJson $ object ["queue" .= q]
          
 -- | enqueue new job
 postJobQueueR :: JobHandler master Value
@@ -168,12 +207,42 @@ getJobStateR = lift $ do
     s <- liftIO $ STM.readTVarIO (getJobState y)
     returnJson $ object ["running" .= s]    
 
--- | Job manager UI (get static page. ajax application)
-getJobManagerR :: JobHandler master Value
+getJobManagerR :: JobHandler master Html
 getJobManagerR = lift $ do
-    sendResponse ("text/html" :: ByteString, content)
-      where content = toContent $(embedFile "app/dist/index.html")
-    
+    y <- getYesod
+    withUrlRenderer [hamlet|
+$doctype 5
+<html>
+    <head>
+        <title>YesodJobQueue Manager
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+        <link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.blue_grey-red.min.css">
+        <script defer src="https://code.getmdl.io/1.1.3/material.min.js">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <body>
+        <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+            <header class="mdl-layout__header">
+                <div class="mdl-layout__header-row">
+                    <!-- Title -->
+                    <span class="mdl-layout-title">YesodJobQueue Manager
+            <main class="mdl-layout__content">
+                <div id="app" class="page-content">
+        <div id="demo-toast-example" class="mdl-js-snackbar mdl-snackbar">
+            <div class="mdl-snackbar__text">
+            <button class="mdl-snackbar__action" type="button">
+        <script>
+            window.BASE_URL = "#{jobAPIBaseUrl y}"
+        <script src="#{jobManagerJSUrl y}">
+|]
+
+-- | Job manager UI (get static page. ajax application)
+getJobManagerStaticR :: Text -> JobHandler master Value
+getJobManagerStaticR f
+    | f == "app.js" = lift $ do
+          let content = toContent $(embedFile "app/dist/app.bundle.js")
+          sendResponse ("application/json" :: ByteString, content)
+    | otherwise = notFound
+
 -- | JobQueue manager subsite
 instance YesodJobQueue master c => YesodSubDispatch JobQueue (HandlerT master IO) where
     yesodSubDispatch = $(mkYesodSubDispatch resourcesJobQueue)

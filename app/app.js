@@ -5,7 +5,7 @@ import {makeHTTPDriver} from '@cycle/http';
 import view from './view.jsx';
 import _ from 'lodash';
 
-var BASE_URL = 'http://localhost:3080/api/v0/job';
+//var BASE_URL
 
 function main(sources) {
   //get responses

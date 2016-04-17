@@ -9,6 +9,9 @@ export default function(x) {
     <tr>
         <td>{x.type}</td>
         <td>
+            {x.description}
+        </td>
+        <td>
             <button className="enqueue-button mdl-button mdl-js-button mdl-button--raised mdl-button--colored" attributes={{"data-name": x.type}}>
                 enqueue
             </button>
@@ -42,7 +45,7 @@ export default function(x) {
             </table>
             <h3>Job Types</h3>
             <table className="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
-                <tr><th>name</th><th>action</th></tr>
+                <tr><th>name</th><th>description</th><th>action</th></tr>
                 {jobTypes}
             </table>
         </div>

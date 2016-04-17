@@ -1,0 +1,5 @@
+.stack-work
+node_modules
+
+
+app/dist/app.bundle.js

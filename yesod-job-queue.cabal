@@ -1,13 +1,13 @@
 name:                yesod-job-queue
 version:             0.1.0.0
-synopsis:            Initial project template from stack
+synopsis:            Background jobs library for Yesod. contains management API and web interface. Queue backend is Redis.
 description:         Please see README.md
-homepage:            https://github.com/githubuser/yesod-job-queue#readme
+homepage:            https://github.com/nakaji-dayo/yesod-job-queue#readme
 license:             BSD3
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2016 Author name here
+author:              Daishi Nakajima
+maintainer:          nakaji.dayo@gmail.com
+copyright:           2016 Daishi Nakajima
 category:            Web
 build-type:          Simple
 extra-source-files: app/dist/app.bundle.js
@@ -91,4 +91,4 @@ test-suite yesod-job-queue-test
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/yesod-job-queue
+  location: https://github.com/nakaji-dayo/yesod-job-queue

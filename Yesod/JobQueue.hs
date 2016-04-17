@@ -19,7 +19,6 @@ import Control.Concurrent
 import Control.Lens ((^.))
 import qualified Data.ByteString.Char8 as BSC (pack, unpack)
 import Control.Monad.Logger
-import System.Cron.Schedule
 import qualified Database.Redis as R
 
 import qualified Data.UUID as U

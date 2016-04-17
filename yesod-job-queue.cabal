@@ -1,6 +1,6 @@
 name:                yesod-job-queue
 version:             0.1.0.0
-synopsis:            Background jobs library for Yesod. contains management API and web interface. Queue backend is Redis.
+synopsis:            Background jobs library for Yesod.
 description:         Please see README.md
 homepage:            https://github.com/nakaji-dayo/yesod-job-queue#readme
 license:             BSD3
@@ -20,6 +20,7 @@ flag example
 library
   -- hs-source-dirs:      src
   exposed-modules:     Yesod.JobQueue
+                     , Yesod.JobQueue.Scheduler
                      , Yesod.JobQueue.APIData
                      , Yesod.JobQueue.Routes
   default-extensions:  TemplateHaskell

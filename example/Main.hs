@@ -2,6 +2,7 @@ import qualified Prelude as P
 import ClassyPrelude.Yesod
 import Yesod
 import Yesod.JobQueue
+import Yesod.JobQueue.Scheduler
 import Control.Concurrent
 import Database.Persist.Sqlite
 import Control.Monad.Trans.Resource (runResourceT)
@@ -60,6 +61,10 @@ instance YesodJobQueue App SqliteConf where
         putStrLn "send norification!"
     -- jobManagerJSUrl _ = "http://localhost:3001/dist/app.bundle.js" -- use for development with "npm run bs"
 
+instance YesodJobQueueScheduler App SqliteConf where
+    getJobSchedules _ = [("* * * * *", AggregationUser)
+                         , ("* * * * *", PushNotification)]
+
 -- Main
 main :: IO ()
 main = runStderrLoggingT $
@@ -70,5 +75,6 @@ main = runStderrLoggingT $
            jobState <- newJobState -- ^ create JobState
            let app = App pool dbConf jobState
            startDequeue app
+           startJobSchedule app
            warp 3000 app
   where dbConf = SqliteConf "test.db3" 4

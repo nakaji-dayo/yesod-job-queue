@@ -58,7 +58,7 @@ instance YesodJobQueue App SqliteConf where
         putStrLn "complate job!"
     runJob app PushNotification = do
         putStrLn "send norification!"
-    jobManagerJSUrl _ = "http://localhost:3001/dist/app.bundle.js" -- use for development with "npm run bs"
+    -- jobManagerJSUrl _ = "http://localhost:3001/dist/app.bundle.js" -- use for development with "npm run bs"
 
 -- Main
 main :: IO ()

@@ -1,5 +1,5 @@
 name:                yesod-job-queue
-version:             0.1.0.0
+version:             0.1.0.1
 synopsis:            Background jobs library for Yesod.
 description:         Please see README.md
 homepage:            https://github.com/nakaji-dayo/yesod-job-queue#readme
@@ -44,7 +44,7 @@ library
                      , lens
                      , classy-prelude-yesod
                      , api-field-json-th
-                     , yesod
+                     , yesod >= 1.4 && < 1.5
                      , file-embed
                      , text
                      , time
@@ -69,7 +69,7 @@ executable          yesod-job-queue-example
 --  other-modules: 
   ghc-options:      -Wall -fwarn-tabs -O2
 
-  build-depends:  base
+  build-depends:  base >= 4.7 && < 5
                 , yesod
                 , yesod-core
                 , yesod-job-queue

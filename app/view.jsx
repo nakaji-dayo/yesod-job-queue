@@ -33,6 +33,15 @@ export default function(x) {
         <td>{moment(x.startTime).format()}</td>
     </tr>
   ));
+  const infos = _.flatten(
+    x.information.map(cls => 
+                      cls.values.map(v => (
+                        <tr>
+                            <td>{cls.className}</td>
+                            <td>{v}</td>
+                        </tr>
+                      )))
+  );
   
   // let flex = {
   //   display: 'flex',
@@ -45,29 +54,39 @@ export default function(x) {
   // };
   
   return (
-    <div className="mdl-layout__content mdl-grid">
-        <div className="mdl-cell mdl-cell--12-col">
-            <h3>Job Types</h3>
-            <table className="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
-                <tr><th>name</th><th>description</th><th>action</th></tr>
-                {jobTypes}
-            </table>
+    <div>
+        <div className="mdl-layout__content mdl-grid">
+            <div className="mdl-cell mdl-cell--8-col" style={({width: '650px'})}>
+                <h3>Job Types</h3>
+                <table className="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+                    <tr><th>name</th><th>description</th><th>action</th></tr>
+                    {jobTypes}
+                </table>
+            </div>
+            <div className="mdl-cell mdl-cell--4-col">
+                <h3>Settings</h3>
+                <table className="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+                    <tr><th>Class</th><th>information</th></tr>
+                    {infos}
+                </table>
+            </div>
         </div>
-        <div className="mdl-cell mdl-cell--4-col" style={({width: '360px'})}>
-            <h3>Queue</h3>
-            <table className="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
-                <tr><th>Type</th><th>Enqueue at</th></tr>
-                {queue}
-            </table>
+        <div className="mdl-layout__content mdl-grid">
+            <div className="mdl-cell mdl-cell--4-col" style={({width: '360px'})}>
+                <h3>Queue</h3>
+                <table className="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+                    <tr><th>Type</th><th>Enqueue at</th></tr>
+                    {queue}
+                </table>
+            </div>
+            <div className="mdl-cell mdl-cell--8-col">
+                <h3>Running Jobs</h3>
+                <table className="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+                    <tr><th>Type</th><th>Thread ID</th><th>Job ID</th><th>Start at</th></tr>
+                    {running}
+                </table>
+            </div>
         </div>
-        <div className="mdl-cell mdl-cell--8-col">
-            <h3>Running Jobs</h3>
-            <table className="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
-                <tr><th>Type</th><th>Thread ID</th><th>Job ID</th><th>Start at</th></tr>
-                {running}
-            </table>
-        </div>
-        {/*Snackbar*/}
     </div>
   );
 }

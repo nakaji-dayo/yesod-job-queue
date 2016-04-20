@@ -11,3 +11,12 @@ data PostJobQueueRequest = PostJobQueueRequest {
 makeFields ''PostJobQueueRequest
 deriveApiFieldJSON ''PostJobQueueRequest
 
+
+
+data JobQueueClassInfo = JobQueueClassInfo {
+    _jobQueueClassInfoClassName :: Text
+    , _jobQueueClassInfoValues :: [Text]
+    }
+
+makeFields ''JobQueueClassInfo
+deriveApiFieldJSON ''JobQueueClassInfo

@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "bs": "./node_modules/browser-sync/bin/browser-sync.js start --server --files 'dist/**/*'",
+    "bs": "./node_modules/browser-sync/bin/browser-sync.js start --server --files 'dist/**/*' --port 3001",
     "build-css": "sass assets/sass/ assets/css/",
     "watch-css": "sass --watch assets/sass/:assets/css/",
     "build-js": "./node_modules/webpack/bin/webpack.js",

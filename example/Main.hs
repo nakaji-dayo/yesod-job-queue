@@ -63,6 +63,7 @@ instance YesodJobQueue App where
         putStrLn "complate job!"
     runJob app PushNotification = do
         putStrLn "send norification!"
+    getClassInformation app = [schedulerInfo app]
     -- jobManagerJSUrl _ = "http://localhost:3001/dist/app.bundle.js" -- use for development with "npm run bs"
 
 instance YesodJobQueueScheduler App  where

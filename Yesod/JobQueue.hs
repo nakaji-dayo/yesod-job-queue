@@ -164,7 +164,9 @@ class (Yesod master, Read (JobType master), Show (JobType master)
              $ map (readMay . BSC.unpack) xs
          Left r -> return $ Left $ show r
 
-
+    -- | get information of all type classes related job-queue
+    getClassInformation :: master -> [JobQueueClassInfo]
+    getClassInformation _ = []
 
 -- | Handler for job manager api routes
 type JobHandler master a =
@@ -174,10 +176,12 @@ type JobHandler master a =
 getJobR :: JobHandler master Value
 getJobR = lift $ do
     y <- getYesod
+    -- job types
     let f x = object ["type" .= show x, "description" .= describe x]
     let ts = map f $ allJobTypes y
-    returnJson $ object ["jobTypes" .= ts]
-    
+    -- type class info
+    let info = getClassInformation y
+    returnJson $ object ["jobTypes" .= ts, "information" .= info]
 
 -- | get a list of jobs in queue
 getJobQueueR :: JobHandler master Value

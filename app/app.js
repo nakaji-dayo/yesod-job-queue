@@ -73,7 +73,7 @@ function main(sources) {
   const jobResponse$ = sources.HTTP
           .filter(res$ => res$.request.id == 'get-job')
           .mergeAll()
-          .map(x => ({jobTypes: x.body.jobTypes}));
+          .map(x => ({jobTypes: x.body.jobTypes, information: x.body.information}));
   const queueResponse$ = sources.HTTP
           .filter(res$ => res$.request.id == 'get-queue')
           .mergeAll()

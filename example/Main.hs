@@ -44,7 +44,7 @@ instance JobInfo MyJobType where
 instance YesodJobQueue App where
     type JobType App = MyJobType
     getJobState = appJobState
-    -- jobDBConfig app = (appDBConf app, appConnPool app)
+    threadNumber _ = 2
     runDBJob action = do
         app <- ask
         runSqlPool action $ appConnPool app
@@ -55,7 +55,7 @@ instance YesodJobQueue App where
         putStrLn "complate job!"
     runJob _ PushNotification = do
         putStrLn "send norification!"
-    getClassInformation app = [schedulerInfo app]
+    getClassInformation app = [jobQueueInfo app, schedulerInfo app]
     -- jobManagerJSUrl _ = "http://localhost:3001/dist/app.bundle.js" -- use for development with "npm run bs"
 
 instance YesodJobQueueScheduler App  where

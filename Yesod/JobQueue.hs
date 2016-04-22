@@ -12,6 +12,7 @@ module Yesod.JobQueue (
     , enqueue
     , JobState
     , newJobState
+    , jobQueueInfo
     , getJobQueue
     ) where
 
@@ -25,6 +26,7 @@ import ClassyPrelude.Yesod
 import Control.Concurrent
 import Control.Lens ((^.))
 import qualified Data.ByteString.Char8 as BSC (pack, unpack)
+import qualified Data.Text as T (pack, append)
 import Control.Monad.Logger
 import qualified Database.Redis as R
 
@@ -89,6 +91,10 @@ class (Yesod master, Read (JobType master), Show (JobType master)
     -- | queue key name for redis
     queueKey :: master -> ByteString
     queueKey _ = "yesod-job-queue"
+
+    -- | The number of threads to run the job
+    threadNumber :: master -> Int
+    threadNumber _ = 1
         
     -- | runDB for job
     runDBJob :: (MonadBaseControl IO m, MonadIO m)
@@ -108,11 +114,16 @@ class (Yesod master, Read (JobType master), Show (JobType master)
 
     -- | get information of all type classes related job-queue
     getClassInformation :: master -> [JobQueueClassInfo]
-    getClassInformation _ = []
+    getClassInformation m = [jobQueueInfo m]
 
--- | start dequeue-ing job in new thread
 startDequeue :: (YesodJobQueue master, MonadBaseControl IO m, MonadIO m) => master -> m ()
 startDequeue m = do
+    let num = threadNumber m
+    forM_ [1 .. num] $ startThread m
+
+-- | start dequeue-ing job in new thread
+startThread :: (YesodJobQueue master, MonadBaseControl IO m, MonadIO m) => master -> ThreadNum -> m ()
+startThread m tNo = do
     liftIO $ forkIO $ do
         conn <- R.connect R.defaultConnectInfo
         R.runRedis conn $ do
@@ -127,7 +138,7 @@ startDequeue m = do
                          Just jt -> do
                              jid <- U.nextRandom
                              time <- getCurrentTime
-                             let job = RunningJob (show jt) 1 jid time
+                             let job = RunningJob (show jt) tNo jid time
                              STM.atomically
                                  $ STM.modifyTVar (getJobState m)
                                  (job:)
@@ -169,6 +180,12 @@ readJobType _ = readMay
 -- | get all job type list
 allJobTypes :: (YesodJobQueue master) => master -> [JobType master]
 allJobTypes _ = [minBound..]
+
+-- | Need by 'getClassInformation'
+jobQueueInfo :: YesodJobQueue master => master ->  JobQueueClassInfo
+jobQueueInfo m = JobQueueClassInfo "JobQueue" [threadInfo]
+  where threadInfo = "Number of threads: " `T.append` (T.pack . show $ threadNumber m)
+
 
 -- | Handler for job manager api routes
 type JobHandler master a =

@@ -1,21 +1,13 @@
-import qualified Prelude as P
+import qualified Prelude as P ()
 import ClassyPrelude.Yesod
-import Yesod
+-- import Yesod
 import Yesod.JobQueue
 import Yesod.JobQueue.Scheduler
 import Control.Concurrent
 import Database.Persist.Sqlite
-import Control.Monad.Trans.Resource (runResourceT)
+--import Control.Monad.Trans.Resource (runResourceT)
 import Control.Monad.Logger (runStderrLoggingT)
 
-
--- Handlers
--- getHomeR :: Handler Html
-getHomeR = defaultLayout $ do
-    setTitle "JobQueue sample"
-    [whamlet|
-        <h1>Hello
-    |]
 
 -- Yesod Persist settings (Nothing special here)
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
@@ -56,12 +48,12 @@ instance YesodJobQueue App where
     runDBJob action = do
         app <- ask
         runSqlPool action $ appConnPool app
-    runJob app AggregationUser = do
+    runJob _ AggregationUser = do
         us <- runDBJob $ selectList ([] :: [Filter Person]) []
         liftIO $ threadDelay $ 10 * 1000 * 1000
         print us
         putStrLn "complate job!"
-    runJob app PushNotification = do
+    runJob _ PushNotification = do
         putStrLn "send norification!"
     getClassInformation app = [schedulerInfo app]
     -- jobManagerJSUrl _ = "http://localhost:3001/dist/app.bundle.js" -- use for development with "npm run bs"
@@ -69,6 +61,14 @@ instance YesodJobQueue App where
 instance YesodJobQueueScheduler App  where
     getJobSchedules _ = [("* * * * *", AggregationUser)
                          , ("* * * * *", PushNotification)]
+
+-- Handlers
+getHomeR :: HandlerT App IO Html
+getHomeR = defaultLayout $ do
+    setTitle "JobQueue sample"
+    [whamlet|
+        <h1>Hello
+    |]
 
 -- Main
 main :: IO ()

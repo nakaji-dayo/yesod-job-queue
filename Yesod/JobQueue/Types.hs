@@ -1,4 +1,4 @@
-module Yesod.JobQueue.APIData where
+module Yesod.JobQueue.Types where
 
 import ClassyPrelude.Yesod
 import Data.Aeson.APIFieldJsonTH

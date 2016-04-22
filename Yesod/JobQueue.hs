@@ -1,18 +1,25 @@
 {-# LANGUAGE ImpredicativeTypes, UndecidableInstances #-}
+-- |
+--
+-- Background jobs library for Yesod.
+-- Use example is in README.md.
+--
 module Yesod.JobQueue (
     YesodJobQueue (..)
     , JobQueue
-    , getJobQueue
-    , JobState
     , JobInfo (..)
-    , newJobState) where
+    , startDequeue
+    , enqueue
+    , JobState
+    , newJobState
+    , getJobQueue
+    ) where
 
 import qualified Prelude as P
 
 import Yesod.JobQueue.Routes
-import Yesod.JobQueue.APIData
+import Yesod.JobQueue.Types
 
--- import Data.Maybe
 import qualified Data.List as L
 import ClassyPrelude.Yesod
 import Control.Concurrent
@@ -30,9 +37,8 @@ import Data.Aeson.TH
 
 import Data.FileEmbed (embedFile)
 
--- persist config for job env
--- type JobDBConf c = (PersistConfig c) => (c, PersistConfigPool c)
 
+-- | description for JobType
 class JobInfo j where
     describe :: j -> String
     describe _ = ""
@@ -67,71 +73,27 @@ data JobQueueItem = JobQueueItem {
 } deriving (Show, Read)
 $(deriveToJSON defaultOptions ''JobQueueItem)
 
+-- | Backend jobs for Yesod
 class (Yesod master, Read (JobType master), Show (JobType master)
       , Enum (JobType master), Bounded (JobType master)
       , JobInfo (JobType master))
       => YesodJobQueue master where
     
-    -- persistent config for job
-    -- jobDBConfig :: master -> JobDBConf config
-    
-    -- Custom Job Type
+    -- | Custom Job Type
     type JobType master
     
-    -- Execute Job Handler
+    -- | Job Handler
     runJob :: (MonadBaseControl IO m, MonadIO m)
               => master -> JobType master -> ReaderT master m ()
     
-    -- queue key name for redis
+    -- | queue key name for redis
     queueKey :: master -> ByteString
     queueKey _ = "yesod-job-queue"
-    
-    -- serialize JobType
-    readJobType :: master -> String -> Maybe (JobType master)
-    readJobType _ = readMay
-    
-    -- desserialize JobType
-    showJobType :: JobType master -> String
-    showJobType = show
-    
-    -- get all job type list
-    allJobTypes :: master -> [JobType master]
-    allJobTypes _ = [minBound..]
-    
-    -- runDB with config for job
+        
+    -- | runDB for job
     runDBJob :: (MonadBaseControl IO m, MonadIO m)
                 => ReaderT (YesodPersistBackend master) (ReaderT master m) a
                 -> ReaderT master m a
-
-    -- start thread of dequeue-ing job
-    startDequeue :: (MonadBaseControl IO m, MonadIO m) => master -> m ()
-    startDequeue m = do
-        liftIO $ forkIO $ do
-            conn <- R.connect R.defaultConnectInfo
-            R.runRedis conn $ do
-                forever $ do
-                    emr <- R.blpop [queueKey m] 600
-                    liftIO $ case emr of
-                        Left e -> putStrLn "[dequeue] error in at connection redis"
-                        Right Nothing -> putStrLn "[dequeue] timeout retry"
-                        Right (Just (k, v)) -> do
-                            let item = readMay $ BSC.unpack v :: Maybe JobQueueItem
-                            case readJobType m =<< queueJobType <$> item of
-                             Just jt -> do
-                                 jid <- U.nextRandom
-                                 time <- getCurrentTime
-                                 let job = RunningJob (show jt) 1 jid time
-                                 STM.atomically
-                                     $ STM.modifyTVar (getJobState m)
-                                     (job:)
-                                 putStrLn . pack $  "dequeued: " ++ (show jt)
-                                 runReaderT (runJob m jt) m
-                                 STM.atomically
-                                     $ STM.modifyTVar (getJobState m)
-                                     (L.delete job)
-                             Nothing -> putStrLn "[dequeue] unknown JobType"
-                    return ()
-        return ()
 
     -- | get job state
     getJobState :: master -> JobState
@@ -144,29 +106,69 @@ class (Yesod master, Read (JobType master), Show (JobType master)
     jobManagerJSUrl :: master -> String
     jobManagerJSUrl m = (jobAPIBaseUrl m) ++ "/manager/app.js"
 
-    enqueue :: master -> JobType master -> IO ()
-    enqueue m jt = do
-        time <- getCurrentTime
-        let item = JobQueueItem (show jt) time
-        conn <- liftIO $ R.connect R.defaultConnectInfo
-        R.runRedis conn $ do
-            R.rpush (queueKey m) [BSC.pack $ show item]
-        return ()
-
-    listQueue :: master -> IO (Either String [JobQueueItem])
-    listQueue m = do
-        conn <- R.connect R.defaultConnectInfo
-        exs <- R.runRedis conn $ do
-            R.lrange (queueKey m) 0 (-1)
-        case exs of
-         Right xs ->
-             return $ Right $ catMaybes
-             $ map (readMay . BSC.unpack) xs
-         Left r -> return $ Left $ show r
-
     -- | get information of all type classes related job-queue
     getClassInformation :: master -> [JobQueueClassInfo]
     getClassInformation _ = []
+
+-- | start dequeue-ing job in new thread
+startDequeue :: (YesodJobQueue master, MonadBaseControl IO m, MonadIO m) => master -> m ()
+startDequeue m = do
+    liftIO $ forkIO $ do
+        conn <- R.connect R.defaultConnectInfo
+        R.runRedis conn $ do
+            forever $ do
+                emr <- R.blpop [queueKey m] 600
+                liftIO $ case emr of
+                    Left e -> putStrLn "[dequeue] error in at connection redis"
+                    Right Nothing -> putStrLn "[dequeue] timeout retry"
+                    Right (Just (k, v)) -> do
+                        let item = readMay $ BSC.unpack v :: Maybe JobQueueItem
+                        case readJobType m =<< queueJobType <$> item of
+                         Just jt -> do
+                             jid <- U.nextRandom
+                             time <- getCurrentTime
+                             let job = RunningJob (show jt) 1 jid time
+                             STM.atomically
+                                 $ STM.modifyTVar (getJobState m)
+                                 (job:)
+                             putStrLn . pack $  "dequeued: " ++ (show jt)
+                             runReaderT (runJob m jt) m
+                             STM.atomically
+                                 $ STM.modifyTVar (getJobState m)
+                                 (L.delete job)
+                         Nothing -> putStrLn "[dequeue] unknown JobType"
+                return ()
+    return ()
+
+-- | Add job to end of the queue
+enqueue :: YesodJobQueue master => master -> JobType master -> IO ()
+enqueue m jt = do
+    time <- getCurrentTime
+    let item = JobQueueItem (show jt) time
+    conn <- liftIO $ R.connect R.defaultConnectInfo
+    R.runRedis conn $ do
+        R.rpush (queueKey m) [BSC.pack $ show item]
+    return ()
+
+-- | Get all job in the queue
+listQueue :: YesodJobQueue master => master -> IO (Either String [JobQueueItem])
+listQueue m = do
+    conn <- R.connect R.defaultConnectInfo
+    exs <- R.runRedis conn $ do
+        R.lrange (queueKey m) 0 (-1)
+    case exs of
+     Right xs ->
+         return $ Right $ catMaybes
+         $ map (readMay . BSC.unpack) xs
+     Left r -> return $ Left $ show r
+
+-- | read JobType from String
+readJobType :: YesodJobQueue master => master -> String -> Maybe (JobType master)
+readJobType _ = readMay
+
+-- | get all job type list
+allJobTypes :: (YesodJobQueue master) => master -> [JobType master]
+allJobTypes _ = [minBound..]
 
 -- | Handler for job manager api routes
 type JobHandler master a =

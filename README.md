@@ -1,4 +1,4 @@
-# yesod-job-queue [![Hackage](https://img.shields.io/hackage/v/yesod-job-queue.svg?maxAge=259200)](https://hackage.haskell.org/package/yesod-job-queue)
+# yesod-job-queue [![Hackage](https://img.shields.io/hackage/v/yesod-job-queue.svg?maxAge=25920)](https://hackage.haskell.org/package/yesod-job-queue)
 
 Background jobs library for Yesod. 
 

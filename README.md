@@ -64,3 +64,16 @@ instance YesodJobQueue App where
 ```
 
 Please see `example`
+
+
+## Build project
+```
+stack build
+```
+### build javascripts (required when app/* was editted)
+```
+cd app
+npm install
+npm run build-js
+```
+

@@ -17,7 +17,7 @@ author:              Daishi Nakajima
 maintainer:          nakaji.dayo@gmail.com
 copyright:           2016 Daishi Nakajima
 category:            Web
-build-type:          Simple
+build-type:          Custom
 extra-source-files: app/dist/app.bundle.js
 cabal-version:       >=1.10
 

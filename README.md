@@ -78,7 +78,7 @@ npm run build-js
 # need again `stack build`
 ```
 #### developping app/*
-You can test app/app.js without re-build package
+You can edit app/app.js without re-build package
 ```
 npm run watch-js ## watch app/*.js for changes, automatically build.
 ```

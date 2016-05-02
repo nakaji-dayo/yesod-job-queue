@@ -66,7 +66,7 @@ instance YesodJobQueue App where
 Please see `example`
 
 
-## Build project
+## Build package
 ```
 stack build
 ```
@@ -75,6 +75,19 @@ stack build
 cd app
 npm install
 npm run build-js
+# need again `stack build`
+```
+#### developping app/*
+You can test app/app.js without re-build package
+```
+npm run watch-js ## watch app/*.js for changes, automatically build.
+```
+```
+npm run bs ## serving app.bundle.js at `http://localhost:3001/dist/app.bundle.js`
+```
+`example/Main.hs`
+```
+jobManagerJSUrl _ = "http://localhost:3001/dist/app.bundle.js"
 ```
 
 ## Run example

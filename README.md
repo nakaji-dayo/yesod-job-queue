@@ -83,9 +83,9 @@ You can edit app/app.js without re-build package
 npm run watch-js ## watch app/*.js for changes, automatically build.
 ```
 ```
-npm run bs ## serving app.bundle.js at `http://localhost:3001/dist/app.bundle.js`
+npm run bs ## serving app.bundle.js at `http://localhost:3001/dist/app.bundle.js` for test
 ```
-`example/Main.hs`
+in `example/Main.hs`. to use test version of app.bundle.js.
 ```
 jobManagerJSUrl _ = "http://localhost:3001/dist/app.bundle.js"
 ```

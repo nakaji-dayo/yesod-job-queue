@@ -87,6 +87,10 @@ class (Yesod master, Read (JobType master), Show (JobType master)
     -- | Job Handler
     runJob :: (MonadBaseControl IO m, MonadIO m)
               => master -> JobType master -> ReaderT master m ()
+
+    -- | connection info for redis
+    queueConnectInfo :: master -> R.ConnectInfo
+    queueConnectInfo _ = R.defaultConnectInfo
     
     -- | queue key name for redis
     queueKey :: master -> ByteString
@@ -125,7 +129,7 @@ startDequeue m = do
 startThread :: (YesodJobQueue master, MonadBaseControl IO m, MonadIO m) => master -> ThreadNum -> m ()
 startThread m tNo = do
     liftIO $ forkIO $ do
-        conn <- R.connect R.defaultConnectInfo
+        conn <- R.connect $ queueConnectInfo m
         R.runRedis conn $ do
             forever $ do
                 emr <- R.blpop [queueKey m] 600
@@ -156,7 +160,7 @@ enqueue :: YesodJobQueue master => master -> JobType master -> IO ()
 enqueue m jt = do
     time <- getCurrentTime
     let item = JobQueueItem (show jt) time
-    conn <- liftIO $ R.connect R.defaultConnectInfo
+    conn <- liftIO $ R.connect $ queueConnectInfo m
     R.runRedis conn $ do
         R.rpush (queueKey m) [BSC.pack $ show item]
     return ()
@@ -164,7 +168,7 @@ enqueue m jt = do
 -- | Get all job in the queue
 listQueue :: YesodJobQueue master => master -> IO (Either String [JobQueueItem])
 listQueue m = do
-    conn <- R.connect R.defaultConnectInfo
+    conn <- R.connect $ queueConnectInfo m
     exs <- R.runRedis conn $ do
         R.lrange (queueKey m) 0 (-1)
     case exs of

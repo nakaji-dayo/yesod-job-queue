@@ -7,7 +7,7 @@ import Control.Concurrent
 import Database.Persist.Sqlite
 --import Control.Monad.Trans.Resource (runResourceT)
 import Control.Monad.Logger (runStderrLoggingT)
-
+-- import qualified Database.Redis as R
 
 -- Yesod Persist settings (Nothing special here)
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
@@ -57,6 +57,9 @@ instance YesodJobQueue App where
         putStrLn "send norification!"
     getClassInformation app = [jobQueueInfo app, schedulerInfo app]
     -- jobManagerJSUrl _ = "http://localhost:3001/dist/app.bundle.js" -- use for development with "npm run bs"
+    -- queueConnectInfo _ = R.defaultConnectInfo
+    --                      {R.connectHost = "127.0.0.1"
+    --                      , R.connectPort = R.PortNumber 6379}
 
 instance YesodJobQueueScheduler App  where
     getJobSchedules _ = [("* * * * *", AggregationUser)

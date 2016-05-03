@@ -54,7 +54,7 @@ instance YesodJobQueue App where
         print us
         putStrLn "complate job!"
     runJob _ PushNotification = do
-        putStrLn "send norification!"
+        putStrLn "sent notification!"
     getClassInformation app = [jobQueueInfo app, schedulerInfo app]
     -- jobManagerJSUrl _ = "http://localhost:3001/dist/app.bundle.js" -- use for development with "npm run bs"
     -- queueConnectInfo _ = R.defaultConnectInfo

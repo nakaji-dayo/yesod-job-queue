@@ -11,7 +11,7 @@ Background jobs library for Yesod.
 
 ![web interface screenshot](https://raw.githubusercontent.com/nakaji-dayo/yesod-job-queue/master/doc/yesod-job-queue-ss.png)
 
-# Usage
+## Usage
 
 Prepare the JobState to manage the running jobs
 ``` haskell
@@ -65,6 +65,10 @@ instance YesodJobQueue App where
 
 Please see `example`
 
+### Configration queue backend (Redis)
+The default is to connect to `redis localhost:6379`.
+
+And, you can change connect info by [queueConnectInfo](https://hackage.haskell.org/package/yesod-job-queue-0.2.0.1/docs/Yesod-JobQueue.html#v:queueConnectInfo)
 
 ## Build package
 ```

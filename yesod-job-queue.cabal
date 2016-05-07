@@ -30,6 +30,7 @@ library
                      , Yesod.JobQueue.Scheduler
                      , Yesod.JobQueue.Types
                      , Yesod.JobQueue.Routes
+                     , Yesod.JobQueue.GenericConstr
   default-extensions:  TemplateHaskell
                      , MultiParamTypeClasses
                      , FunctionalDependencies

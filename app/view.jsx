@@ -6,6 +6,13 @@ import moment from "moment";
 
 export default function(x) {
   console.log(x);
+  const enqueueButton = type => <button className="enqueue-button mdl-button mdl-js-button mdl-button--raised mdl-button--colored" attributes={{"data-name": type}}>
+          enqueue
+  </button>;
+  const showArgs = xs =>
+          <p>
+          args: {xs.join(',')}
+          </p>;
   const jobTypes = x.jobTypes.map(x => (
     <tr>
         <td>{x.type}</td>
@@ -13,9 +20,7 @@ export default function(x) {
             {x.description}
         </td>
         <td>
-            <button className="enqueue-button mdl-button mdl-js-button mdl-button--raised mdl-button--colored" attributes={{"data-name": x.type}}>
-                enqueue
-            </button>
+            {x.args.length == 0 ? enqueueButton(x.type) : showArgs(x.args)}
         </td>
     </tr>
   ));

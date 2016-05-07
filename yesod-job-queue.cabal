@@ -73,6 +73,7 @@ executable          yesod-job-queue-example
                      , MultiParamTypeClasses
                      , EmptyDataDecls
                      , GeneralizedNewtypeDeriving
+                     , DeriveGeneric
 --  other-modules: 
   ghc-options:      -Wall -fwarn-tabs -O2
 

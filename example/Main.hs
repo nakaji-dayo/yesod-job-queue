@@ -36,10 +36,10 @@ mkYesod "App" [parseRoutes|
 |]
 
 -- JobQueue settings
-data MyJobType = AggregationUser | PushNotification deriving (Show, Read, Enum, Bounded)
-instance JobInfo MyJobType where
-        describe AggregationUser = "aggregate user's activities"
-        describe _ = "No information"
+data MyJobType = AggregationUser
+               | PushNotification
+               | HelloJob String
+               deriving (Show, Read, Generic)
 
 instance YesodJobQueue App where
     type JobType App = MyJobType
@@ -55,7 +55,11 @@ instance YesodJobQueue App where
         putStrLn "complate job!"
     runJob _ PushNotification = do
         putStrLn "sent notification!"
+    runJob _ (HelloJob name) = do
+        putStrLn . pack $ "Hello " ++ name
     getClassInformation app = [jobQueueInfo app, schedulerInfo app]
+    describeJob _ "AggregationUser" = Just "aggregate user's activities"
+    describeJob _ _ = Nothing
     -- jobManagerJSUrl _ = "http://localhost:3001/dist/app.bundle.js" -- use for development with "npm run bs"
     -- queueConnectInfo _ = R.defaultConnectInfo
     --                      {R.connectHost = "127.0.0.1"
@@ -63,7 +67,7 @@ instance YesodJobQueue App where
 
 instance YesodJobQueueScheduler App  where
     getJobSchedules _ = [("* * * * *", AggregationUser)
-                         , ("* * * * *", PushNotification)]
+                         , ("* * * * *", HelloJob "Foo")]
 
 -- Handlers
 getHomeR :: HandlerT App IO Html

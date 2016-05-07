@@ -1,5 +1,5 @@
 name:                yesod-job-queue
-version:             0.2.0.1
+version:             0.3.0.0
 synopsis:            Background jobs library for Yesod.
 description:
   Background jobs library for Yesod
@@ -30,6 +30,7 @@ library
                      , Yesod.JobQueue.Scheduler
                      , Yesod.JobQueue.Types
                      , Yesod.JobQueue.Routes
+                     , Yesod.JobQueue.GenericConstr
   default-extensions:  TemplateHaskell
                      , MultiParamTypeClasses
                      , FunctionalDependencies
@@ -73,6 +74,7 @@ executable          yesod-job-queue-example
                      , MultiParamTypeClasses
                      , EmptyDataDecls
                      , GeneralizedNewtypeDeriving
+                     , DeriveGeneric
 --  other-modules: 
   ghc-options:      -Wall -fwarn-tabs -O2
 

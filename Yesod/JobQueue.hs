@@ -7,7 +7,6 @@
 module Yesod.JobQueue (
     YesodJobQueue (..)
     , JobQueue
-    , JobInfo (..)
     , startDequeue
     , enqueue
     , JobState
@@ -20,9 +19,10 @@ import qualified Prelude as P
 
 import Yesod.JobQueue.Routes
 import Yesod.JobQueue.Types
+import Yesod.JobQueue.GenericConstr
 
 import qualified Data.List as L
-import ClassyPrelude.Yesod
+import ClassyPrelude.Yesod hiding (Proxy)
 import Control.Concurrent
 import Control.Lens ((^.))
 import qualified Data.ByteString.Char8 as BSC (pack, unpack)
@@ -36,14 +36,11 @@ import qualified Control.Concurrent.STM as STM
 import Data.Time.Clock
 
 import Data.Aeson.TH
+import GHC.Generics (Rep)
+import Data.Proxy
 
 import Data.FileEmbed (embedFile)
 
-
--- | description for JobType
-class JobInfo j where
-    describe :: j -> String
-    describe _ = ""
 
 -- | Thread ID for convenience
 type ThreadNum = Int
@@ -77,8 +74,8 @@ $(deriveToJSON defaultOptions ''JobQueueItem)
 
 -- | Backend jobs for Yesod
 class (Yesod master, Read (JobType master), Show (JobType master)
-      , Enum (JobType master), Bounded (JobType master)
-      , JobInfo (JobType master))
+      , Generic (JobType master), Constructors (Rep (JobType master))
+      )
       => YesodJobQueue master where
     
     -- | Custom Job Type
@@ -115,6 +112,10 @@ class (Yesod master, Read (JobType master), Show (JobType master)
     -- | get manager application javascript url (change only development)
     jobManagerJSUrl :: master -> String
     jobManagerJSUrl m = (jobAPIBaseUrl m) ++ "/manager/app.js"
+
+    -- | Job Information
+    describeJob :: master -> JobTypeString -> Maybe Text
+    describeJob _ _ = Nothing
 
     -- | get information of all type classes related job-queue
     getClassInformation :: master -> [JobQueueClassInfo]
@@ -181,10 +182,6 @@ listQueue m = do
 readJobType :: YesodJobQueue master => master -> String -> Maybe (JobType master)
 readJobType _ = readMay
 
--- | get all job type list
-allJobTypes :: (YesodJobQueue master) => master -> [JobType master]
-allJobTypes _ = [minBound..]
-
 -- | Need by 'getClassInformation'
 jobQueueInfo :: YesodJobQueue master => master ->  JobQueueClassInfo
 jobQueueInfo m = JobQueueClassInfo "JobQueue" [threadInfo]
@@ -195,16 +192,23 @@ jobQueueInfo m = JobQueueClassInfo "JobQueue" [threadInfo]
 type JobHandler master a =
     YesodJobQueue master => HandlerT JobQueue (HandlerT master IO) a
 
+jobTypeProxy :: (YesodJobQueue m) => m -> Proxy (JobType m)
+jobTypeProxy _ = Proxy
+
 -- | get job definitions
 getJobR :: JobHandler master Value
 getJobR = lift $ do
     y <- getYesod
-    -- job types
-    let f x = object ["type" .= show x, "description" .= describe x]
-    let ts = map f $ allJobTypes y
-    -- type class info
+    let parseConstr (c:args) = object ["type" .= c, "args" .= args, "description" .= describeJob y c]
+        constrs = map parseConstr $ genericConstructors $ jobTypeProxy y
     let info = getClassInformation y
-    returnJson $ object ["jobTypes" .= ts, "information" .= info]
+    returnJson $ object ["jobTypes" .= constrs, "information" .= info]
+    -- -- job types
+    -- let f x = object ["type" .= show x, "description" .= describe x]
+    -- let ts = map f $ allJobTypes y
+    -- -- type class info
+    -- let info = getClassInformation y
+    -- returnJson $ object ["jobTypes" .= ts, "information" .= info]
 
 -- | get a list of jobs in queue
 getJobQueueR :: JobHandler master Value

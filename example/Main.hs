@@ -43,6 +43,7 @@ data MyJobType = AggregationUser
 
 instance YesodJobQueue App where
     type JobType App = MyJobType
+    type YesodJobPersistBackend App = SqlBackend
     getJobState = appJobState
     threadNumber _ = 2
     runDBJob action = do

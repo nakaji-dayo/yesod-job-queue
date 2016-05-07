@@ -80,6 +80,10 @@ class (Yesod master, Read (JobType master), Show (JobType master)
     
     -- | Custom Job Type
     type JobType master
+
+    -- | Persist backend for job
+    type YesodJobPersistBackend master
+    type YesodJobPersistBackend master = YesodPersistBackend master
     
     -- | Job Handler
     runJob :: (MonadBaseControl IO m, MonadIO m)
@@ -99,7 +103,7 @@ class (Yesod master, Read (JobType master), Show (JobType master)
         
     -- | runDB for job
     runDBJob :: (MonadBaseControl IO m, MonadIO m)
-                => ReaderT (YesodPersistBackend master) (ReaderT master m) a
+                => ReaderT (YesodJobPersistBackend master) (ReaderT master m) a
                 -> ReaderT master m a
 
     -- | get job state

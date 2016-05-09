@@ -40,10 +40,10 @@ mkYesod "App" [parseRoutes|
 Define the job. And, to the setting of JobQueue
 ``` haskell
 -- Your job type
-data MyJobType = AggregationUser | PushNotification deriving (Show, Read, Enum, Bounded)
-instance JobInfo MyJobType where
-        describe AggregationUser = "aggregate user's activities"
-        describe _ = "No information"
+data MyJobType = AggregationUser
+               | PushNotification
+               | HelloJob String
+               deriving (Show, Read, Generic)
 
 -- JobQueue settings
 instance YesodJobQueue App where
@@ -60,7 +60,9 @@ instance YesodJobQueue App where
         print us
         putStrLn "complate job!"
     runJob _ PushNotification = do
-        putStrLn "send norification!"
+        putStrLn "sent norification!"
+    runJob _ (HelloJob name) = do
+        putStrLn . pack $ "Hello " ++ name
 ```
 
 Please see `example`

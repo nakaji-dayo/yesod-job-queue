@@ -1,4 +1,9 @@
-{-# LANGUAGE ImpredicativeTypes, UndecidableInstances #-}
+{-# LANGUAGE ImpredicativeTypes #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 -- |
 --
 -- Background jobs library for Yesod.
@@ -15,32 +20,41 @@ module Yesod.JobQueue (
     , getJobQueue
     ) where
 
-import qualified Prelude as P
-
 import Yesod.JobQueue.Routes
 import Yesod.JobQueue.Types
 import Yesod.JobQueue.GenericConstr
 
-import qualified Data.List as L
-import ClassyPrelude.Yesod hiding (Proxy)
-import Control.Concurrent
+import Control.Concurrent (forkIO)
+import qualified Control.Concurrent.STM as STM
+import Control.Concurrent.STM (TVar)
 import Control.Lens ((^.))
-import qualified Data.ByteString.Char8 as BSC (pack, unpack)
-import qualified Data.Text as T (pack, append)
-import Control.Monad.Logger
-import qualified Database.Redis as R
-
+import Control.Monad (forever, void)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Control (MonadBaseControl)
+import Control.Monad.Trans.Reader (ReaderT, runReaderT)
+import Data.Aeson (ToJSON(toJSON), Value(String), (.=), object)
+import Data.Aeson.TH (defaultOptions, deriveToJSON)
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as BSC
+import Data.FileEmbed (embedFile)
+import Data.Foldable (forM_)
+import qualified Data.List as L
+import Data.Maybe (catMaybes)
+import Data.Proxy (Proxy(Proxy))
+import Data.Text (Text)
+import qualified Data.Text as T
+import Data.Time.Clock (UTCTime, getCurrentTime)
 import qualified Data.UUID as U
 import qualified Data.UUID.V4 as U
-import qualified Control.Concurrent.STM as STM
-import Data.Time.Clock
-
-import Data.Aeson.TH
-import GHC.Generics (Rep)
-import Data.Proxy
-
-import Data.FileEmbed (embedFile)
-
+import qualified Database.Redis as R
+import GHC.Generics (Generic, Rep)
+import Text.Read (readMaybe)
+import Yesod.Core
+    (HandlerT, Html, Yesod, YesodSubDispatch(yesodSubDispatch), getYesod,
+     hamlet, invalidArgs, mkYesodSubDispatch, notFound, requireJsonBody,
+     returnJson, sendResponse, toContent, withUrlRenderer)
+import Yesod.Persist.Core (YesodPersistBackend)
 
 -- | Thread ID for convenience
 type ThreadNum = Int
@@ -56,7 +70,7 @@ data RunningJob = RunningJob {
     , startTime :: UTCTime
     } deriving (Eq)
 instance ToJSON U.UUID where
-    toJSON = String . pack . U.toString
+    toJSON = String . T.pack . U.toString
 $(deriveToJSON defaultOptions ''RunningJob)
 
 -- | Manage the running jobs
@@ -77,10 +91,10 @@ class (Yesod master, Read (JobType master), Show (JobType master)
       , Generic (JobType master), Constructors (Rep (JobType master))
       )
       => YesodJobQueue master where
-    
+
     -- | Custom Job Type
     type JobType master
-    
+
     -- | Job Handler
     runJob :: (MonadBaseControl IO m, MonadIO m)
               => master -> JobType master -> ReaderT master m ()
@@ -88,7 +102,7 @@ class (Yesod master, Read (JobType master), Show (JobType master)
     -- | connection info for redis
     queueConnectInfo :: master -> R.ConnectInfo
     queueConnectInfo _ = R.defaultConnectInfo
-    
+
     -- | queue key name for redis
     queueKey :: master -> ByteString
     queueKey _ = "yesod-job-queue"
@@ -96,7 +110,7 @@ class (Yesod master, Read (JobType master), Show (JobType master)
     -- | The number of threads to run the job
     threadNumber :: master -> Int
     threadNumber _ = 1
-        
+
     -- | runDB for job
     runDBJob :: (MonadBaseControl IO m, MonadIO m)
                 => ReaderT (YesodPersistBackend master) (ReaderT master m) a
@@ -127,46 +141,51 @@ startDequeue m = do
     forM_ [1 .. num] $ startThread m
 
 -- | start dequeue-ing job in new thread
-startThread :: (YesodJobQueue master, MonadBaseControl IO m, MonadIO m) => master -> ThreadNum -> m ()
-startThread m tNo = do
-    liftIO $ forkIO $ do
-        conn <- R.connect $ queueConnectInfo m
-        R.runRedis conn $ do
-            forever $ do
-                emr <- R.blpop [queueKey m] 600
-                liftIO $ case emr of
-                    Left e -> putStrLn "[dequeue] error in at connection redis"
-                    Right Nothing -> putStrLn "[dequeue] timeout retry"
-                    Right (Just (k, v)) -> do
-                        let item = readMay $ BSC.unpack v :: Maybe JobQueueItem
-                        case readJobType m =<< queueJobType <$> item of
-                         Just jt -> do
-                             jid <- U.nextRandom
-                             time <- getCurrentTime
-                             let job = RunningJob (show jt) tNo jid time
-                             STM.atomically
-                                 $ STM.modifyTVar (getJobState m)
-                                 (job:)
-                             putStrLn . pack $  "dequeued: " ++ (show jt)
-                             runReaderT (runJob m jt) m
-                             STM.atomically
-                                 $ STM.modifyTVar (getJobState m)
-                                 (L.delete job)
-                         Nothing -> putStrLn "[dequeue] unknown JobType"
-                return ()
-    return ()
+startThread :: forall master m . (YesodJobQueue master, MonadBaseControl IO m, MonadIO m)
+            => master -> ThreadNum -> m ()
+startThread m tNo = void $ liftIO $ forkIO $ do
+    conn <- R.connect $ queueConnectInfo m
+    R.runRedis conn $ forever $ do
+        result <- R.blpop [queueKey m] 600
+        liftIO $ handleResultFromRedis result
+  where
+    handleResultFromRedis :: Either R.Reply (Maybe (ByteString, ByteString)) -> IO ()
+    handleResultFromRedis (Left _) =
+        putStrLn "[dequeue] error in at connection redis"
+    handleResultFromRedis (Right Nothing) =
+        putStrLn "[dequeue] timeout retry"
+    handleResultFromRedis (Right (Just (_, redisValue))) = do
+        let item = readMaybe $ BSC.unpack redisValue
+        handleJob $ readJobType m =<< queueJobType <$> item
+
+    handleJob :: Maybe (JobType master) -> IO ()
+    handleJob Nothing = putStrLn "[dequeue] unknown JobType"
+    handleJob (Just jt) = do
+        jid <- U.nextRandom
+        time <- getCurrentTime
+        let runningJob = RunningJob
+                { jobType = (show jt)
+                , threadId = tNo
+                , jobId = jid
+                , startTime = time
+                }
+        STM.atomically $ STM.modifyTVar (getJobState m) (runningJob:)
+        putStrLn $ "dequeued: " ++ (show jt)
+        runReaderT (runJob m jt) m
+        STM.atomically $ STM.modifyTVar (getJobState m) (L.delete runningJob)
 
 -- | Add job to end of the queue
 enqueue :: YesodJobQueue master => master -> JobType master -> IO ()
 enqueue m jt = do
     time <- getCurrentTime
-    let item = JobQueueItem (show jt) time
+    let item = JobQueueItem
+            { queueJobType = show jt
+            , queueTime = time
+            }
     conn <- liftIO $ R.connect $ queueConnectInfo m
-    R.runRedis conn $ do
-        R.rpush (queueKey m) [BSC.pack $ show item]
-    return ()
+    void $ R.runRedis conn $ R.rpush (queueKey m) [BSC.pack $ show item]
 
--- | Get all job in the queue
+-- | Get all jobs in the queue
 listQueue :: YesodJobQueue master => master -> IO (Either String [JobQueueItem])
 listQueue m = do
     conn <- R.connect $ queueConnectInfo m
@@ -175,12 +194,12 @@ listQueue m = do
     case exs of
      Right xs ->
          return $ Right $ catMaybes
-         $ map (readMay . BSC.unpack) xs
+         $ map (readMaybe . BSC.unpack) xs
      Left r -> return $ Left $ show r
 
 -- | read JobType from String
 readJobType :: YesodJobQueue master => master -> String -> Maybe (JobType master)
-readJobType _ = readMay
+readJobType _ = readMaybe
 
 -- | Need by 'getClassInformation'
 jobQueueInfo :: YesodJobQueue master => master ->  JobQueueClassInfo
@@ -216,7 +235,7 @@ getJobQueueR = lift $ do
     y <- getYesod
     Right q <- liftIO $ listQueue y
     returnJson $ object ["queue" .= q]
-         
+
 -- | enqueue new job
 postJobQueueR :: JobHandler master Value
 postJobQueueR = lift $ do
@@ -233,7 +252,7 @@ getJobStateR :: JobHandler master Value
 getJobStateR = lift $ do
     y <- getYesod
     s <- liftIO $ STM.readTVarIO (getJobState y)
-    returnJson $ object ["running" .= s]    
+    returnJson $ object ["running" .= s]
 
 getJobManagerR :: JobHandler master Html
 getJobManagerR = lift $ do
@@ -277,5 +296,3 @@ instance YesodJobQueue master => YesodSubDispatch JobQueue (HandlerT master IO) 
 
 getJobQueue :: a -> JobQueue
 getJobQueue = const JobQueue
-
-    

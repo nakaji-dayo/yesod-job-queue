@@ -1,13 +1,8 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE TypeOperators #-}
 module Yesod.JobQueue.GenericConstr where
 
-import GHC.Generics
 import Data.Proxy
 import Data.Typeable
+import GHC.Generics
 
 -- *Demo> genericConstructors  (Proxy :: Proxy (Either Int Bool))
 -- [["Left","Int"],["Right","Bool"]]
@@ -49,4 +44,3 @@ instance (Fields f, Fields g) => Fields (f :*: g) where
 
 instance Typeable a => Fields (K1 i a) where
   fields _ = [show (typeRep (Proxy :: Proxy a))]
-  

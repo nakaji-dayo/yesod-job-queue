@@ -1,8 +1,10 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Yesod.JobQueue.Types where
 
-import ClassyPrelude.Yesod
 import Data.Aeson.APIFieldJsonTH
-import Control.Lens
+import Data.Text (Text)
+import Control.Lens (makeFields)
 
 data PostJobQueueRequest = PostJobQueueRequest {
     _postJobQueueRequestJob :: String

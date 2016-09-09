@@ -119,6 +119,9 @@ before_install:
   else
     curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
   fi
+- npm --version
+- npm install -g npm@'>=2.13.0'
+- npm --version
 
 install:
 - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
@@ -134,9 +137,15 @@ install:
       cabal install --only-dependencies --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS
       ;;
   esac
+  cd app/
+  npm install --dev
+  cd ../
 
 script:
 - |
+  cd app/
+  npm run build-js
+  cd ../
   case "$BUILD" in
     stack)
       stack --no-terminal $ARGS test --haddock --no-haddock-deps

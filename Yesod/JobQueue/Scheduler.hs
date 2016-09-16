@@ -1,14 +1,14 @@
 -- | Cron Job for Yesod
 module Yesod.JobQueue.Scheduler where
 
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Trans.Control (MonadBaseControl)
+import Data.Monoid ((<>))
+import qualified Data.Text as T (pack)
+import System.Cron.Schedule
 import Yesod.JobQueue
 import Yesod.JobQueue.Types
-import System.Cron.Schedule
 
-import qualified Prelude as P
-import ClassyPrelude.Yesod
-
-import qualified Data.Text as T (pack)
 
 -- | Cron Scheduler for YesodJobQueue
 class (YesodJobQueue master) => YesodJobQueueScheduler master where
@@ -20,9 +20,9 @@ class (YesodJobQueue master) => YesodJobQueueScheduler master where
     startJobSchedule master = do
         let add (s, jt) = addJob (enqueue master jt) s
         tids <- liftIO $ execSchedule $ mapM_ add $ getJobSchedules master
-        print tids
+        liftIO $ print tids
 
 -- | Need by 'getClassInformation'
 schedulerInfo :: YesodJobQueueScheduler master => master ->  JobQueueClassInfo
 schedulerInfo m = JobQueueClassInfo "Scheduler" $  map (T.pack . showSchedule) $ getJobSchedules m
-  where showSchedule (s, jt) = s ++ " | " ++ (show jt)
+  where showSchedule (s, jt) = s <> " | " <> (show jt)

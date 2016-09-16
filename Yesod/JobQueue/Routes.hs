@@ -1,7 +1,10 @@
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
+
 module Yesod.JobQueue.Routes where
 
-import Yesod
 import Data.Text
+import Yesod
 
 -- Subsites have foundations just like master sites.
 data JobQueue = JobQueue

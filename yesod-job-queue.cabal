@@ -27,36 +27,41 @@ flag example
                               
 library
   exposed-modules:     Yesod.JobQueue
+                     , Yesod.JobQueue.GenericConstr
+                     , Yesod.JobQueue.Routes
                      , Yesod.JobQueue.Scheduler
                      , Yesod.JobQueue.Types
-                     , Yesod.JobQueue.Routes
-                     , Yesod.JobQueue.GenericConstr
-  default-extensions:  TemplateHaskell
-                     , MultiParamTypeClasses
-                     , FunctionalDependencies
-                     , TypeSynonymInstances
+  default-extensions:  FlexibleContexts
                      , FlexibleInstances
-                     , QuasiQuotes
-                     , TypeFamilies
+                     , FunctionalDependencies
+                     , KindSignatures
+                     , MultiParamTypeClasses
                      , OverloadedStrings
-                     , FlexibleContexts
+                     , ScopedTypeVariables
+                     , TypeFamilies
+                     , TypeOperators
+                     , TypeSynonymInstances
                      , ViewPatterns
   build-depends:       base >= 4.7 && < 5
-                     , stm
-                     , hedis
-                     , uuid
                      , aeson
-                     , cron
-                     , monad-logger
-                     , bytestring
-                     , lens
-                     , classy-prelude-yesod
                      , api-field-json-th
-                     , yesod >= 1.4 && < 1.5
+                     , bytestring
+                     , cron
                      , file-embed
+                     , hedis
+                     , lens
+                     , monad-control
+                     , monad-logger
+                     , stm
                      , text
                      , time
+                     , transformers
+                     , uuid
+                     , yesod >= 1.4 && < 1.5
+                     , yesod-core
+                     , yesod-persistent
                      
+  ghc-options:         -Wall -fwarn-tabs -O2
   default-language:    Haskell2010
 
 executable          yesod-job-queue-example

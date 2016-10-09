@@ -1,13 +1,9 @@
 import qualified Prelude as P ()
 import ClassyPrelude.Yesod
--- import Yesod
 import Yesod.JobQueue
 import Yesod.JobQueue.Scheduler
-import Control.Concurrent
 import Database.Persist.Sqlite
---import Control.Monad.Trans.Resource (runResourceT)
 import Control.Monad.Logger (runStderrLoggingT)
--- import qualified Database.Redis as R
 
 -- Yesod Persist settings (Nothing special here)
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|

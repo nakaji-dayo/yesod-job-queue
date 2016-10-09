@@ -18,7 +18,9 @@ maintainer:          nakaji.dayo@gmail.com
 copyright:           2016 Daishi Nakajima
 category:            Web
 build-type:          Custom
-extra-source-files: app/dist/app.bundle.js
+extra-source-files:  README.md
+                     app/dist/app.bundle.js
+                     doc/yesod-job-queue-ss.png
 cabal-version:       >=1.10
 
 flag example

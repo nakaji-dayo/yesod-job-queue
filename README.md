@@ -1,9 +1,8 @@
-# yesod-job-queue [![Hackage](https://img.shields.io/hackage/v/yesod-job-queue.svg?maxAge=25920)](https://hackage.haskell.org/package/yesod-job-queue)
-
-Background jobs library for Yesod. 
+# yesod-job-queue [![Hackage](https://img.shields.io/hackage/v/yesod-job-queue.svg?maxAge=25920)](https://hackage.haskell.org/package/yesod-job-queue) [![Stackage LTS](http://stackage.org/package/yesod-job-queue/badge/lts)](http://stackage.org/lts/package/yesod-job-queue) [![Stackage Nightly](http://stackage.org/package/yesod-job-queue/badge/nightly)](http://stackage.org/nightly/package/yesod-job-queue) [![Build Status](https://secure.travis-ci.org/nakaji-dayo/yesod-job-queue.svg)](http://travis-ci.org/nakaji-dayo/yesod-job-queue)
+Background jobs library for Yesod.
 
 - There are API and Web UI for managing the job.
-- Queue backend is Redis. 
+- Queue backend is Redis.
 - Multithreaded.
 
 
@@ -22,7 +21,7 @@ data App = App {
     , appDBConf :: SqliteConf
     , appJobState :: JobState
     }
-    
+
 -- e.g. In makeFoundation
 main = do
     jobState <- newJobState -- create JobState

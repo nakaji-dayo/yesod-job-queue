@@ -175,14 +175,14 @@ startThread m tNo = void $ liftIO $ forkIO $ do
         STM.atomically $ STM.modifyTVar (getJobState m) (L.delete runningJob)
 
 -- | Add job to end of the queue
-enqueue :: YesodJobQueue master => master -> JobType master -> IO ()
-enqueue m jt = do
+enqueue :: (MonadIO m, YesodJobQueue master) => master -> JobType master -> m ()
+enqueue m jt = liftIO $ do
     time <- getCurrentTime
     let item = JobQueueItem
             { queueJobType = show jt
             , queueTime = time
             }
-    conn <- liftIO $ R.connect $ queueConnectInfo m
+    conn <- R.connect $ queueConnectInfo m
     void $ R.runRedis conn $ R.rpush (queueKey m) [BSC.pack $ show item]
 
 -- | Get all jobs in the queue

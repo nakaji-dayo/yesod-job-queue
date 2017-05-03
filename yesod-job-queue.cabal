@@ -1,5 +1,5 @@
 name:                yesod-job-queue
-version:             0.3.0.0
+version:             0.3.0.2
 synopsis:            Background jobs library for Yesod.
 description:
   Background jobs library for Yesod

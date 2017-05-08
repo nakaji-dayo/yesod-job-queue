@@ -69,8 +69,7 @@ data RunningJob = RunningJob {
     , jobId :: U.UUID
     , startTime :: UTCTime
     } deriving (Eq)
-instance ToJSON U.UUID where
-    toJSON = String . T.pack . U.toString
+
 $(deriveToJSON defaultOptions ''RunningJob)
 
 -- | Manage the running jobs

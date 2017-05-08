@@ -45,7 +45,7 @@ library
                      , TypeSynonymInstances
                      , ViewPatterns
   build-depends:       base >= 4.7 && < 5
-                     , aeson
+                     , aeson >= 1.1
                      , api-field-json-th
                      , bytestring
                      , cron

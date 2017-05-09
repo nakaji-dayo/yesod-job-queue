@@ -33,7 +33,7 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Control.Monad.Trans.Reader (ReaderT, runReaderT)
-import Data.Aeson (ToJSON(toJSON), Value(String), (.=), object)
+import Data.Aeson (Value, (.=), object)
 import Data.Aeson.TH (defaultOptions, deriveToJSON)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BSC

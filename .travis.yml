@@ -71,18 +71,14 @@ matrix:
   #   compiler: ": #stack 7.10.3"
   #   addons: {apt: {packages: [ghc-7.10.3], sources: [hvr-ghc]}}
 
-  - env: BUILD=stack ARGS="--resolver lts-7"
-    compiler: ": #stack 8.0.1"
-    addons: {apt: {packages: [ghc-8.0.1], sources: [hvr-ghc]}}
-
-  - env: BUILD=stack ARGS="--resolver lts-8"
-    compiler: ": #stack 8.0.2"
-    addons: {apt: {packages: [ghc-8.0.2], sources: [hvr-ghc]}}
-
   # Disable because of https://github.com/haskell/haddock/issues/508
   # - env: BUILD=stack ARGS="--resolver lts-7"
   #   compiler: ": #stack 8.0.1"
   #   addons: {apt: {packages: [ghc-8.0.1], sources: [hvr-ghc]}}
+
+  - env: BUILD=stack ARGS="--resolver lts-8"
+    compiler: ": #stack 8.0.2"
+    addons: {apt: {packages: [ghc-8.0.2], sources: [hvr-ghc]}}
 
   # Nightly builds are allowed to fail
   - env: BUILD=stack ARGS="--resolver nightly"
@@ -106,18 +102,14 @@ matrix:
   #   compiler: ": #stack 7.10.3 osx"
   #   os: osx
 
-  - env: BUILD=stack ARGS="--resolver lts-7"
-    compiler: ": #stack 8.0.1 osx"
-    os: osx
-
-  - env: BUILD=stack ARGS="--resolver lts-8"
-    compiler: ": #stack 8.0.2 osx"
-    os: osx
-
   # Disable because of https://github.com/haskell/haddock/issues/508
   # - env: BUILD=stack ARGS="--resolver lts-7"
   #   compiler: ": #stack 8.0.1 osx"
   #   os: osx
+
+  - env: BUILD=stack ARGS="--resolver lts-8"
+    compiler: ": #stack 8.0.2 osx"
+    os: osx
 
   - env: BUILD=stack ARGS="--resolver nightly"
     compiler: ": #stack nightly osx"

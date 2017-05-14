@@ -5,7 +5,7 @@
 sudo: false
 
 # Choose a lightweight base image; we provide our own build tools.
-language: c
+language: generic
 
 # Caching so the next build will be fast too.
 cache:
@@ -59,22 +59,26 @@ matrix:
   #   compiler: ": #stack 7.8.4"
   #   addons: {apt: {packages: [ghc-7.8.4], sources: [hvr-ghc]}}
 
-  - env: BUILD=stack ARGS="--resolver lts-3"
-    compiler: ": #stack 7.10.2"
-    addons: {apt: {packages: [ghc-7.10.2], sources: [hvr-ghc]}}
+  # - env: BUILD=stack ARGS="--resolver lts-3"
+  #   compiler: ": #stack 7.10.2"
+  #   addons: {apt: {packages: [ghc-7.10.2], sources: [hvr-ghc]}}
 
-  - env: BUILD=stack ARGS="--resolver lts-5"
-    compiler: ": #stack 7.10.3"
-    addons: {apt: {packages: [ghc-7.10.3], sources: [hvr-ghc]}}
+  # - env: BUILD=stack ARGS="--resolver lts-5"
+  #   compiler: ": #stack 7.10.3"
+  #   addons: {apt: {packages: [ghc-7.10.3], sources: [hvr-ghc]}}
 
-  - env: BUILD=stack ARGS="--resolver lts-6"
-    compiler: ": #stack 7.10.3"
-    addons: {apt: {packages: [ghc-7.10.3], sources: [hvr-ghc]}}
+  # - env: BUILD=stack ARGS="--resolver lts-6"
+  #   compiler: ": #stack 7.10.3"
+  #   addons: {apt: {packages: [ghc-7.10.3], sources: [hvr-ghc]}}
 
   # Disable because of https://github.com/haskell/haddock/issues/508
   # - env: BUILD=stack ARGS="--resolver lts-7"
   #   compiler: ": #stack 8.0.1"
   #   addons: {apt: {packages: [ghc-8.0.1], sources: [hvr-ghc]}}
+
+  - env: BUILD=stack ARGS="--resolver lts-8"
+    compiler: ": #stack 8.0.2"
+    addons: {apt: {packages: [ghc-8.0.2], sources: [hvr-ghc]}}
 
   # Nightly builds are allowed to fail
   - env: BUILD=stack ARGS="--resolver nightly"
@@ -86,22 +90,26 @@ matrix:
   #   compiler: ": #stack 7.8.4 osx"
   #   os: osx
 
-  - env: BUILD=stack ARGS="--resolver lts-3"
-    compiler: ": #stack 7.10.2 osx"
-    os: osx
+  # - env: BUILD=stack ARGS="--resolver lts-3"
+  #   compiler: ": #stack 7.10.2 osx"
+  #   os: osx
 
-  - env: BUILD=stack ARGS="--resolver lts-5"
-    compiler: ": #stack 7.10.3 osx"
-    os: osx
+  # - env: BUILD=stack ARGS="--resolver lts-5"
+  #   compiler: ": #stack 7.10.3 osx"
+  #   os: osx
 
-  - env: BUILD=stack ARGS="--resolver lts-6"
-    compiler: ": #stack 7.10.3 osx"
-    os: osx
+  # - env: BUILD=stack ARGS="--resolver lts-6"
+  #   compiler: ": #stack 7.10.3 osx"
+  #   os: osx
 
   # Disable because of https://github.com/haskell/haddock/issues/508
   # - env: BUILD=stack ARGS="--resolver lts-7"
   #   compiler: ": #stack 8.0.1 osx"
   #   os: osx
+
+  - env: BUILD=stack ARGS="--resolver lts-8"
+    compiler: ": #stack 8.0.2 osx"
+    os: osx
 
   - env: BUILD=stack ARGS="--resolver nightly"
     compiler: ": #stack nightly osx"
@@ -130,6 +138,7 @@ before_install:
     curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
   fi
 - npm --version
+- rm -rf ~/.nvm && travis_retry git clone https://github.com/creationix/nvm.git ~/.nvm && (cd ~/.nvm && git checkout `git describe --abbrev=0 --tags`) && source ~/.nvm/nvm.sh && nvm install 7
 - npm install -g npm@'>=2.13.0'
 - npm --version
 
@@ -156,9 +165,10 @@ script:
   cd app/
   npm run build-js
   cd ../
+- |
   case "$BUILD" in
     stack)
-      stack --no-terminal $ARGS test --haddock --no-haddock-deps
+      stack --no-terminal $ARGS test
       ;;
     cabal)
       cabal configure --enable-tests --enable-benchmarks -v2 --ghc-options="-O0 -Wall"

@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK prune #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Yesod.JobQueue.Types where

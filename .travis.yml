@@ -7,6 +7,9 @@ sudo: false
 # Choose a lightweight base image; we provide our own build tools.
 language: generic
 
+env:
+  - TRAVIS_NODE_VERSION="7"
+
 # Caching so the next build will be fast too.
 cache:
   directories:
@@ -138,6 +141,7 @@ before_install:
     curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
   fi
 - npm --version
+- rm -rf ~/.nvm && git clone https://github.com/creationix/nvm.git ~/.nvm && (cd ~/.nvm && git checkout `git describe --abbrev=0 --tags`) && source ~/.nvm/nvm.sh && nvm install $TRAVIS_NODE_VERSION
 - npm install -g npm@'>=2.13.0'
 - npm --version
 
@@ -164,6 +168,7 @@ script:
   cd app/
   npm run build-js
   cd ../
+- |
   case "$BUILD" in
     stack)
       stack --no-terminal $ARGS test

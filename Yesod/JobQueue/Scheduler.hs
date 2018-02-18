@@ -4,7 +4,7 @@ module Yesod.JobQueue.Scheduler where
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Monoid ((<>))
-import qualified Data.Text as T (pack)
+import qualified Data.Text as T (pack, Text)
 import System.Cron.Schedule
 import Yesod.JobQueue
 import Yesod.JobQueue.Types
@@ -13,7 +13,7 @@ import Yesod.JobQueue.Types
 -- | Cron Scheduler for YesodJobQueue
 class (YesodJobQueue master) => YesodJobQueueScheduler master where
     -- | job schedules
-    getJobSchedules :: master -> [(String, JobType master)]
+    getJobSchedules :: master -> [(T.Text, JobType master)]
 
     -- | start schedule
     startJobSchedule :: (MonadBaseControl IO m, MonadIO m) => master -> m ()
@@ -24,5 +24,5 @@ class (YesodJobQueue master) => YesodJobQueueScheduler master where
 
 -- | Need by 'getClassInformation'
 schedulerInfo :: YesodJobQueueScheduler master => master ->  JobQueueClassInfo
-schedulerInfo m = JobQueueClassInfo "Scheduler" $  map (T.pack . showSchedule) $ getJobSchedules m
-  where showSchedule (s, jt) = s <> " | " <> (show jt)
+schedulerInfo m = JobQueueClassInfo "Scheduler" $  map showSchedule $ getJobSchedules m
+  where showSchedule (s, jt) = s <> " | " <> (T.pack $ show jt)

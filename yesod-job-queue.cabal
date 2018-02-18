@@ -48,7 +48,7 @@ library
                      , aeson >= 1.1
                      , api-field-json-th >= 0.1
                      , bytestring
-                     , cron >= 0.5.0 && < 0.6
+                     , cron >= 0.6.0 && < 0.7
                      , file-embed
                      , hedis
                      , lens

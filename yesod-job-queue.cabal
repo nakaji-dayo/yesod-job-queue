@@ -59,9 +59,9 @@ library
                      , time
                      , transformers
                      , uuid
-                     , yesod >= 1.4 && < 1.5
+                     , yesod >= 1.4 && < 1.7
                      , yesod-core
-                     , yesod-persistent >= 1.4 && < 1.5
+                     , yesod-persistent >= 1.4 && < 1.7
                      
   ghc-options:         -Wall -fwarn-tabs
   default-language:    Haskell2010

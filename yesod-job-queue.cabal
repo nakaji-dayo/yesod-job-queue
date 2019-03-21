@@ -45,7 +45,7 @@ library
                      , TypeSynonymInstances
                      , ViewPatterns
   build-depends:       base >= 4.7 && < 5
-                     , aeson >= 1.1
+                     , aeson >= 0.6 && < 1.4
                      , api-field-json-th >= 0.1
                      , bytestring
                      , cron >= 0.6.0 && < 0.7
@@ -59,9 +59,9 @@ library
                      , time
                      , transformers
                      , uuid
-                     , yesod >= 1.4 && < 1.5
-                     , yesod-core
-                     , yesod-persistent >= 1.4 && < 1.5
+                     , yesod >= 1.6 && < 1.7
+                     , yesod-core >= 1.6 && < 1.7
+                     , yesod-persistent >= 1.6 && < 1.7
                      
   ghc-options:         -Wall -fwarn-tabs
   default-language:    Haskell2010

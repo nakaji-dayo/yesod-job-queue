@@ -2,7 +2,7 @@
 module Yesod.JobQueue.Scheduler where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Trans.Control (MonadBaseControl)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Monoid ((<>))
 import qualified Data.Text as T (pack, Text)
 import System.Cron.Schedule
@@ -16,7 +16,7 @@ class (YesodJobQueue master) => YesodJobQueueScheduler master where
     getJobSchedules :: master -> [(T.Text, JobType master)]
 
     -- | start schedule
-    startJobSchedule :: (MonadBaseControl IO m, MonadIO m) => master -> m ()
+    startJobSchedule :: MonadUnliftIO m => master -> m ()
     startJobSchedule master = do
         let add (s, jt) = addJob (enqueue master jt) s
         tids <- liftIO $ execSchedule $ mapM_ add $ getJobSchedules master

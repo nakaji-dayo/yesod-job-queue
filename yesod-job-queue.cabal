@@ -4,12 +4,12 @@ synopsis:            Background jobs library for Yesod.
 description:
   Background jobs library for Yesod
   .
-  * It contains management API and web interface. 
+  * It contains management API and web interface.
   * Queue backend is Redis.
   * Support cron scheduler
   .
   Usage and screen shot are available in README.md
- 
+
 homepage:            https://github.com/nakaji-dayo/yesod-job-queue#readme
 license:             BSD3
 license-file:        LICENSE
@@ -26,7 +26,7 @@ cabal-version:       >=1.10
 flag example
   description: Build the example application
   default: False
-                              
+
 library
   exposed-modules:     Yesod.JobQueue
                      , Yesod.JobQueue.GenericConstr
@@ -45,24 +45,24 @@ library
                      , TypeSynonymInstances
                      , ViewPatterns
   build-depends:       base >= 4.7 && < 5
-                     , aeson >= 0.6 && < 1.4
+                     , aeson >= 0.6 && < 1.5
                      , api-field-json-th >= 0.1
                      , bytestring
                      , cron >= 0.6.0 && < 0.7
                      , file-embed
                      , hedis
                      , lens
-                     , monad-control
                      , monad-logger
                      , stm
                      , text
                      , time
                      , transformers
+                     , unliftio-core >= 0.1.2.0 && < 0.2
                      , uuid
                      , yesod >= 1.6 && < 1.7
                      , yesod-core >= 1.6 && < 1.7
                      , yesod-persistent >= 1.6 && < 1.7
-                     
+
   ghc-options:         -Wall -fwarn-tabs
   default-language:    Haskell2010
 
@@ -82,7 +82,7 @@ executable          yesod-job-queue-example
                      , EmptyDataDecls
                      , GeneralizedNewtypeDeriving
                      , DeriveGeneric
---  other-modules: 
+--  other-modules:
   ghc-options:      -Wall -fwarn-tabs
 
   build-depends:  base >= 4.7 && < 5
@@ -97,7 +97,7 @@ executable          yesod-job-queue-example
 
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
-  
+
 test-suite yesod-job-queue-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test

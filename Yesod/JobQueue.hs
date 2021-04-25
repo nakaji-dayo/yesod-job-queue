@@ -52,7 +52,7 @@ import GHC.Generics (Generic, Rep)
 import Text.Read (readMaybe)
 import Yesod.Core
     (HandlerFor, SubHandlerFor, Html, Yesod, YesodSubDispatch(yesodSubDispatch), getYesod,
-     hamlet, invalidArgs, mkYesodSubDispatch, notFound, requireJsonBody,
+     hamlet, invalidArgs, mkYesodSubDispatch, notFound, requireCheckJsonBody,
      returnJson, sendResponse, toContent, withUrlRenderer, liftHandler)
 import Yesod.Core.Types (HandlerContents(HCError), ErrorResponse(InternalError))
 
@@ -244,7 +244,7 @@ getJobQueueR = liftHandler $ do
 postJobQueueR :: JobHandler master Value
 postJobQueueR = liftHandler $ do
     y <- getYesod
-    body <- requireJsonBody :: HandlerFor master PostJobQueueRequest
+    body <- requireCheckJsonBody :: HandlerFor master PostJobQueueRequest
     case readJobType y (body ^. job) of
      Just jt -> do
          liftIO $ enqueue y jt

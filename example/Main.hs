@@ -1,9 +1,13 @@
+{-# LANGUAGE DerivingStrategies, StandaloneDeriving, UndecidableInstances, DataKinds, FlexibleInstances #-}
+
 import qualified Prelude as P ()
 import ClassyPrelude.Yesod
 import Yesod.JobQueue
 import Yesod.JobQueue.Scheduler
 import Database.Persist.Sqlite
 import Control.Monad.Logger (runStderrLoggingT)
+import Control.Concurrent (threadDelay)
+
 
 -- Yesod Persist settings (Nothing special here)
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|

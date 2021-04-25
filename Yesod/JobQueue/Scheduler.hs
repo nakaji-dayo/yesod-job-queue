@@ -1,9 +1,8 @@
 -- | Cron Job for Yesod
 module Yesod.JobQueue.Scheduler where
 
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.IO.Class (liftIO)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
-import Data.Monoid ((<>))
 import qualified Data.Text as T (pack, Text)
 import System.Cron.Schedule
 import Yesod.JobQueue

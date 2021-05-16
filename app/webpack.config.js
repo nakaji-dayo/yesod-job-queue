@@ -6,11 +6,18 @@ module.exports = {
     filename: "app.bundle.js"
   },
   module: {
-    loaders: [
+    rules: [
       {
-        test: /\.js.*$/,
+        test: /\.jsx?$/,
         exclude: /(node_modules)/,
-        loader: 'babel'
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              presets: [ '@babel/preset-env' ],
+            }
+          }
+        ]
       }
     ]
   },

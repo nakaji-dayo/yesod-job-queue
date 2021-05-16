@@ -100,4 +100,3 @@ jobManagerJSUrl _ = "http://localhost:3001/dist/app.bundle.js"
 stack build --flag yesod-job-queue:example && stack exec yesod-job-queue-example
 ```
 You can access Web UI: `http://localhost:3000/job/manager`
-
